@@ -1,0 +1,26 @@
+WIKI BROWSER TRAFFIC
+KIM NGO
+
+** requires kafka and kafka-python installation **
+
+kafka-tail-producer.py
+	watches logfile and publishes new GET requests to kafka using tail
+	accounts for log rotation
+	message format: timestamp, user, URL
+
+kafka-tail-consumer.py
+	creates user log directory
+	creates kafka-tail log file for metadata
+	reads comma delimmited messages with the format: timestamp, user, URL
+		parses message and extracts username
+		creates log file for each user in the new directory: user.csv
+		appends kafka message to appropriate user log file
+
+Integrating Bokeh visualization is in progress
+
+** **
+
+wikiviz.r
+	R script that reads a csv file [timestamp, user, URL] and creates timeseries plot by user: user.png
+		* x axis is currently calibrated for <24 hour time period
+		* needs to account for longer time period so the graph is readable
