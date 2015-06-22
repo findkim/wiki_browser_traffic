@@ -4,7 +4,7 @@
 # June 16, 2015
 #
 # kafka consumer that reads comma delimmited messages: timestamp, user, URL
-# creates a directory and appropriate user log files to append message to
+# creates a directory and appropriate user log files to append timestamp,URL to
 # metadata is appended to kafka-tail.log file
 # -- to be ran with kafka-tail-producer.py
 
@@ -17,7 +17,7 @@ import atexit
 import re,os,sys,os.path
 
 METADATA_LOG = 'kafka-tail.log'
-USER = 1
+TIMESTAMP,USER,URL = range(3)
 
 class Consumer():#threading.Thread):
 	daemon = True
@@ -62,7 +62,8 @@ class Consumer():#threading.Thread):
 					if not os.path.isfile(user_log_file):
 						cmd = 'touch ' + user_log_file
 						os.system(cmd)
-					cmd = 'echo \"' + message.message.value + '\" >> ' + user_log_file
+					# Append timestamp and url to user's log file
+					cmd = 'echo \"' + data[TIMESTAMP] + ',' + data[URL] + '\" >> ' + user_log_file
 					os.system(cmd)
 		except KeyboardInterrupt,e:
 			pass
