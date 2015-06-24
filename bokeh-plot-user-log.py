@@ -7,16 +7,37 @@
 # Plots time vs. page visited
 
 import pandas as pd
+from bokeh.models import HoverTool, ColumnDataSource
 from bokeh.plotting import figure, output_file, show
+from bokeh.models.tools import (WheelZoomTool, PanTool,BoxZoomTool,ResetTool,ResizeTool)
 import sys, os.path
-#import datetime
 import re
 
+Y_AXIS_LABEL = "xdata.proxy\nWiki Page"
 HTML_EXTENSION = '.html'
+
+
+### Bokeh tools ###
+
+hover = HoverTool(
+	tooltips = [
+		("Timestamp", "@TS"),
+		("Wiki page", "$y"),
+	]
+)
+box = BoxZoomTool(dimensions = ["width","y"])
+pan = PanTool(dimensions = ["width","y"])
+zoom = WheelZoomTool(dimensions = ["width","y"])
+TOOLS = [hover, box, zoom, pan, ResizeTool(), ResetTool()]
+
+### End tools ###
+
+
 
 # Truncates URL--Replaces + with ' ' and extracts page title 
 def truncate_URL(url):
 	return re.sub('\+', ' ', re.sub('.*\/', '', url))
+
 
 def main():
 	if len(sys.argv) < 2:
@@ -33,23 +54,31 @@ def main():
 
 	# Clean up data
 	data['URL'] = data['URL'].apply(truncate_URL)
+	data['TS'] = data.Date.map(lambda x: x.strftime('%m/%d/%Y %H:%M:%S')) # Used for HoverTool.tooltips
+
+	source = ColumnDataSource(data)
 
 	# Output to static HTML file
-	user = input_file.split('.') # Removes log file extension
-	output_file(user[0]+HTML_EXTENSION)
+	no_ext = re.sub('\..*', '', input_file) # Removes log file extension
+	path = re.sub('\/.*', '/', no_ext) # Extracts file path
+	user = re.sub('.*\/', '', no_ext) # Extracts user
+	output_file(path+user+HTML_EXTENSION)
 	
 	# Create a new plot with a title and axis lablels
-	p = figure(title=user[0],
+	p = figure(title=user,
 							x_axis_type="datetime",
 							y_range=list(set(data.URL)),
 							x_axis_label='Timestamp',
-							y_axis_label='Page Title',
-							plot_width=800
+							y_axis_label=Y_AXIS_LABEL,
+							plot_width=800,
+							plot_height=200+(len(set(data.Date)))*10, # y-axis dynamic to URLS visited
+							tools=TOOLS,
+							toolbar_location="right"
 						)
-	p.circle(list(data.Date), list(data.URL))
+	p.scatter("Date","URL",source=source, size=10)
 
 	# Show the results
-	show(p)
+	#show(p)
 
 if __name__ == "__main__":
 	main()

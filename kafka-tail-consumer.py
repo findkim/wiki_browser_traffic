@@ -16,6 +16,7 @@ import subprocess
 import atexit
 import re,os,sys,os.path
 
+BOKEH_SCRIPT = 'bokeh-plot-user-log.py'
 METADATA_LOG = 'kafka-tail.log'
 TIMESTAMP,USER,URL = range(3)
 
@@ -56,15 +57,19 @@ class Consumer():#threading.Thread):
 
 				# Handles csv messages and appends to appropriate log file
 				else:
-					print message.message.value
 					data =  message.message.value.split(',')
 					user_log_file = self.directory + '/' + data[USER] + '.csv'
 					if not os.path.isfile(user_log_file):
 						cmd = 'touch ' + user_log_file
 						os.system(cmd)
+
 					# Append timestamp and url to user's log file
 					cmd = 'echo \"' + data[TIMESTAMP] + ',' + data[URL] + '\" >> ' + user_log_file
 					os.system(cmd)
+
+					# Child runs bokeh script to pre-preprocess graph
+					process = subprocess.Popen([BOKEH_SCRIPT, user_log_file])
+
 		except KeyboardInterrupt,e:
 			pass
 
